@@ -8,6 +8,7 @@ from alembic import context
 from src.config import settings
 from src.users.models import Base as Base1
 from src.game.models import Base as Base2
+from src.play.models import Base as Base3
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

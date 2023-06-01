@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 30e38d456800
-Revises: 0b98045d9b5e
-Create Date: 2023-05-28 22:20:22.969229
+Revision ID: 1c6218269347
+Revises: 
+Create Date: 2023-05-29 23:11:49.955087
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '30e38d456800'
-down_revision = '0b98045d9b5e'
+revision = '1c6218269347'
+down_revision = None
 branch_labels = None
 depends_on = None
 
@@ -26,25 +26,26 @@ def upgrade() -> None:
     sa.Column('language', sa.String(), nullable=True),
     sa.Column('type', sa.String(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('owner_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text("(now() AT TIME ZONE 'Asia/Tashkent')"), nullable=False),
     sa.Column('updated_at', sa.TIMESTAMP(timezone=True), server_default=sa.text("(now() AT TIME ZONE 'Asia/Tashkent')"), nullable=False),
+    sa.ForeignKeyConstraint(['owner_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_games_id'), 'games', ['id'], unique=False)
-    op.create_index(op.f('ix_games_title'), 'games', ['title'], unique=True)
+    op.create_index(op.f('ix_games_title'), 'games', ['title'], unique=False)
     op.create_table('questions',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('cover_image', sa.String(), nullable=True),
-    sa.Column('answer_a', sa.String(), nullable=False),
-    sa.Column('answer_b', sa.String(), nullable=False),
-    sa.Column('answer_c', sa.String(), nullable=False),
-    sa.Column('answer_d', sa.String(), nullable=False),
-    sa.Column('correct_answer', sa.String(), nullable=False),
+    sa.Column('time', sa.Integer(), nullable=True),
+    sa.Column('option_a', sa.String(), nullable=False),
+    sa.Column('option_b', sa.String(), nullable=False),
+    sa.Column('option_c', sa.String(), nullable=False),
+    sa.Column('option_d', sa.String(), nullable=False),
+    sa.Column('correct_option', sa.String(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('game_id', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text("(now() AT TIME ZONE 'Asia/Tashkent')"), nullable=False),
-    sa.Column('updated_at', sa.TIMESTAMP(timezone=True), server_default=sa.text("(now() AT TIME ZONE 'Asia/Tashkent')"), nullable=False),
     sa.ForeignKeyConstraint(['game_id'], ['games.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
