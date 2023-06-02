@@ -33,6 +33,9 @@ def get_all_games(db: Session = Depends(get_db),
                   current_user=Depends(oauth2.get_current_user)):
     games = db.query(models.Game).filter(models.Game.type == 'public').all()
 
+    if not games:
+        games = list()
+
     return games
 
 
@@ -53,8 +56,8 @@ def get_one_game(id: int, db: Session = Depends(get_db),
         "owner_id": game.owner_id,
         "description": game.description,
         "is_active": game.is_active,
-        "total_slides": len(list(questions)),
-        "slides": list(questions),
+        "total_questions": len(list(questions)),
+        "questions": list(questions),
     })
     return data
 
@@ -70,7 +73,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
     if current_user.id != game.owner_id:
         raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=f"you are not changing your own game")
 
-    if question.correct_option.lower() not in ['a', 'b', 'c', 'd']:
+    if question.correct_option.lower() not in ['option_a', 'option_b', 'option_c', 'option_d']:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"correct option [{question.correct_option}] is not valid value [a, b, c, d]")
 

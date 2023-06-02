@@ -1,13 +1,12 @@
 from typing import List
 
-from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
+from fastapi import status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
-from . import models, schemas, utils
+from . import models, schemas
 from .utils import code_generator
 from ..game import models as game_models
 from ..database import get_db
 from ..auth import oauth2
-from datetime import timedelta
 
 router = APIRouter(
     prefix="/play",
@@ -43,13 +42,38 @@ def create_game(active_game: schemas.ActiveGameCreate, db: Session = Depends(get
     return new_active_game
 
 
-@router.get("/", status_code=status.HTTP_200_OK, response_model=schemas.ActiveGameOut)
-def create_game(code: int, db: Session = Depends(get_db)):
-    game = db.query(models.ActiveGame).filter(models.ActiveGame.generated_code == code).first()
-    if not game:
+@router.get("/", status_code=status.HTTP_200_OK)
+def get_active_game(code: int, db: Session = Depends(get_db)):
+
+    active_game = db.query(models.ActiveGame).filter(models.ActiveGame.generated_code == code).first()
+    if not active_game:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"active game with this code [ {code} ] does not found")
-    return game
+    game = db.query(game_models.Game).filter(game_models.Game.id == active_game.game_id).first()
+    questions = db.query(game_models.Question).filter(game_models.Question.game_id == active_game.game_id).all()
+    questions_list = list()
+    for question in questions:
+        question_dict = dict()
+        question_dict['id'] = question.id
+        question_dict['cover_image'] = question.cover_image
+        question_dict['option_a'] = question.option_a
+        question_dict['option_b'] = question.option_b
+        question_dict['option_c'] = question.option_c
+        question_dict['option_d'] = question.option_d
+        questions_list.append(question_dict)
+
+    data = dict({
+        "title": game.title,
+        "type": game.type,
+        "cover_image": game.cover_image,
+        "owner_id": game.owner_id,
+        "description": game.description,
+        "is_active": game.is_active,
+        "total_slides": len(questions_list),
+        "questions": questions_list,
+    })
+
+    return data
 
 
 @router.get("/gamers/", status_code=status.HTTP_200_OK, response_model=List[schemas.ActiveGamersOut])
@@ -58,7 +82,7 @@ def get_all_gamers(code: int, db: Session = Depends(get_db)):
     if not game:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"active game with this code [ {code} ] does not found")
-    gamers = db.query(models.ActiveGamer).filter(models.ActiveGamer.generated_code == code).\
+    gamers = db.query(models.ActiveGamer).filter(models.ActiveGamer.generated_code == code). \
         order_by(models.ActiveGamer.points.desc()).all()
     return gamers
 
