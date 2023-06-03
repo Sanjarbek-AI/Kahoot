@@ -50,6 +50,7 @@ def create_game_all(game: schemas.GameAllCreate, db: Session = Depends(get_db),
             new_question = models.Question(
                 game_id=new_game.id,
                 title=question['title'],
+                cover_image=question['image'],
                 option_a=question['option_a'],
                 option_b=question['option_b'],
                 option_c=question['option_c'],
