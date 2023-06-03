@@ -44,7 +44,6 @@ def create_game(active_game: schemas.ActiveGameCreate, db: Session = Depends(get
 
 @router.get("/", status_code=status.HTTP_200_OK)
 def get_active_game(code: int, db: Session = Depends(get_db)):
-
     active_game = db.query(models.ActiveGame).filter(models.ActiveGame.generated_code == code).first()
     if not active_game:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -55,6 +54,7 @@ def get_active_game(code: int, db: Session = Depends(get_db)):
     for question in questions:
         question_dict = dict()
         question_dict['id'] = question.id
+        question_dict['generated_code'] = active_game.generated_code
         question_dict['cover_image'] = question.cover_image
         question_dict['option_a'] = question.option_a
         question_dict['option_b'] = question.option_b
@@ -65,6 +65,7 @@ def get_active_game(code: int, db: Session = Depends(get_db)):
     data = dict({
         "title": game.title,
         "type": game.type,
+        "generated_code": active_game.generated_code,
         "cover_image": game.cover_image,
         "owner_id": game.owner_id,
         "description": game.description,
@@ -102,3 +103,26 @@ def create_gamer(active_gamer: schemas.ActiveGamerCreate, db: Session = Depends(
     db.refresh(new_gamer)
 
     return {"status": True, "detail": "User joined successfully"}
+
+
+@router.put("/answer/", status_code=status.HTTP_200_OK)
+def gamer_answer(answer: schemas.GamerAnswer, db: Session = Depends(get_db)):
+    question = db.query(game_models.Question).filter(game_models.Question.id == answer.question_id).first()
+
+    if not question:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"question with this [ {answer.question_id} ] does not found")
+    gamer = db.query(models.ActiveGamer).filter(models.ActiveGamer.username == answer.username,
+                                                models.ActiveGamer.generated_code == answer.code)
+    if not gamer.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"user does not found")
+    gamer_data = gamer.first()
+
+    if answer.correct_option.lower() == question.correct_option.lower():
+        gamer.update({'points': gamer_data.points + 100}, synchronize_session=False)
+        db.commit()
+        return {"answer": True}
+
+    else:
+        return {"answer": False}

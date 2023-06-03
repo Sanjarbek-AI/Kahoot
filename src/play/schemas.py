@@ -31,3 +31,10 @@ class ActiveGamersOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class GamerAnswer(BaseModel):
+    code: int
+    question_id: int
+    username: str
+    correct_option: str

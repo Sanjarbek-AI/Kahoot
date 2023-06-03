@@ -66,3 +66,4 @@ class ActiveGamer(Base):
         nullable=False,
         server_default=text("(now() AT TIME ZONE 'Asia/Tashkent')")
     )
+
