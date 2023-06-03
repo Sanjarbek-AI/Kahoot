@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.ActiveGameOut)
-def create_game(active_game: schemas.ActiveGameCreate, db: Session = Depends(get_db),
+def create_active_game(active_game: schemas.ActiveGameCreate, db: Session = Depends(get_db),
                 current_user=Depends(oauth2.get_current_user)):
     game = db.query(game_models.Game).filter(game_models.Game.id == active_game.game_id).first()
 
@@ -89,7 +89,7 @@ def get_all_gamers(code: int, db: Session = Depends(get_db)):
 
 
 @router.post("/join/", status_code=status.HTTP_201_CREATED)
-def create_gamer(active_gamer: schemas.ActiveGamerCreate, db: Session = Depends(get_db)):
+def join_active_game(active_gamer: schemas.ActiveGamerCreate, db: Session = Depends(get_db)):
     active_gamer_query = db.query(models.ActiveGamer).filter(
         models.ActiveGamer.generated_code == active_gamer.generated_code,
         models.ActiveGamer.username == active_gamer.username)
@@ -106,7 +106,7 @@ def create_gamer(active_gamer: schemas.ActiveGamerCreate, db: Session = Depends(
 
 
 @router.put("/answer/", status_code=status.HTTP_200_OK)
-def gamer_answer(answer: schemas.GamerAnswer, db: Session = Depends(get_db)):
+def send_answer(answer: schemas.GamerAnswer, db: Session = Depends(get_db)):
     question = db.query(game_models.Question).filter(game_models.Question.id == answer.question_id).first()
 
     if not question:
