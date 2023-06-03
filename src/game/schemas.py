@@ -11,6 +11,14 @@ class GameCreate(BaseModel):
     type: str
 
 
+class GameAllCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    cover_image: str
+    type: str
+    questions: list[dict]
+
+
 class GameOut(GameCreate):
     id: int
     created_at: datetime

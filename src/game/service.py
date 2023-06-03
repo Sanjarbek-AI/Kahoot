@@ -28,6 +28,44 @@ def create_game(game: schemas.GameCreate, db: Session = Depends(get_db),
     return new_game
 
 
+@router.post("/all/", status_code=status.HTTP_201_CREATED)
+def create_game_all(game: schemas.GameAllCreate, db: Session = Depends(get_db),
+                    current_user=Depends(oauth2.get_current_user)):
+    if game.type.lower() != "public" and game.type.lower() != "private":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="type value is not valid status [public, private]")
+
+    new_game = models.Game(owner_id=current_user.id, title=game.title, description=game.description,
+                           cover_image=game.cover_image, type=game.type)
+    db.add(new_game)
+    db.commit()
+    db.refresh(new_game)
+
+    for question in game.questions:
+        try:
+            if question.correct_option.lower() not in ['option_a', 'option_b', 'option_c', 'option_d']:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail=f"correct option [{question.correct_option}] is not valid value [a, b, c, d]")
+
+            new_question = models.Question(
+                game_id=new_game.id,
+                title=question['title'],
+                option_a=question['option_a'],
+                option_b=question['option_b'],
+                option_c=question['option_c'],
+                option_d=question['option_d'],
+                time=question['time'],
+                correct_option=question['correct_option']
+            )
+            db.add(new_question)
+            db.commit()
+            db.refresh(new_question)
+        except Exception as exs:
+            print(exs)
+
+    return {"success": "Created", "id": new_game.id}
+
+
 @router.get("/", status_code=status.HTTP_200_OK, response_model=List[schemas.GameOut])
 def get_all_games(db: Session = Depends(get_db),
                   current_user=Depends(oauth2.get_current_user)):

@@ -61,3 +61,23 @@ class Question(Base):
         "games.id", ondelete="CASCADE"), nullable=False
                      )
     game = relationship("Game")
+
+
+class GamerAnswer(Base):
+    __tablename__ = "gameranswers"
+    __table_args__ = {"extend_existing": True}
+
+    id = Column(Integer, primary_key=True, index=True)
+    generated_code = Column(Integer, unique=True, index=True, default=0)
+    username = Column(String, nullable=False)
+
+    question_id = Column(Integer, ForeignKey(
+        "questions.id", ondelete="CASCADE"), nullable=False
+                         )
+    game = relationship("Question")
+
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=text("(now() AT TIME ZONE 'Asia/Tashkent')")
+    )

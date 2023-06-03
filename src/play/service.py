@@ -112,11 +112,35 @@ def gamer_answer(answer: schemas.GamerAnswer, db: Session = Depends(get_db)):
     if not question:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"question with this [ {answer.question_id} ] does not found")
-    gamer = db.query(models.ActiveGamer).filter(models.ActiveGamer.username == answer.username,
-                                                models.ActiveGamer.generated_code == answer.code)
+
+    gamer = db.query(models.ActiveGamer).filter(
+        models.ActiveGamer.username == answer.username,
+        models.ActiveGamer.generated_code == answer.code
+    )
+
     if not gamer.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"user does not found")
+
+    answer_check = db.query(game_models.GamerAnswer).filter(
+        game_models.GamerAnswer.generated_code == answer.code,
+        game_models.GamerAnswer.username == answer.username,
+        game_models.GamerAnswer.question_id == answer.question_id
+    ).first()
+
+    if answer_check:
+        raise HTTPException(status_code=status.HTTP_208_ALREADY_REPORTED, detail=f"you already answer this question")
+
+    if answer.correct_option.lower() not in ['option_a', 'option_b', 'option_c', 'option_d']:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"correct_option is not valid")
+
+    new_answer = game_models.GamerAnswer(
+        generated_code=answer.code, username=answer.username, question_id=answer.question_id
+    )
+    db.add(new_answer)
+    db.commit()
+    db.refresh(new_answer)
+
     gamer_data = gamer.first()
 
     if answer.correct_option.lower() == question.correct_option.lower():
@@ -126,3 +150,4 @@ def gamer_answer(answer: schemas.GamerAnswer, db: Session = Depends(get_db)):
 
     else:
         return {"answer": False}
+    
