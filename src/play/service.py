@@ -16,7 +16,7 @@ router = APIRouter(
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.ActiveGameOut)
 def create_active_game(active_game: schemas.ActiveGameCreate, db: Session = Depends(get_db),
-                current_user=Depends(oauth2.get_current_user)):
+                       current_user=Depends(oauth2.get_current_user)):
     game = db.query(game_models.Game).filter(game_models.Game.id == active_game.game_id).first()
 
     if not game:
@@ -29,8 +29,7 @@ def create_active_game(active_game: schemas.ActiveGameCreate, db: Session = Depe
         models.ActiveGame.is_active == True).first()
 
     if user_game:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"you already stated this games")
+        return user_game
 
     random_code = code_generator(db)
 
@@ -150,4 +149,3 @@ def send_answer(answer: schemas.GamerAnswer, db: Session = Depends(get_db)):
 
     else:
         return {"answer": False}
-    
